@@ -189,22 +189,35 @@ ChessBoard.prototype.move = function(move) {
     var validMoves = [];
     if (this.isPawn(from)) {
 	validMoves = this.getValidPawnMoves(from);
-	console.log(validMoves);
-	var result = this.isMoveInList(validMoves, to);
-	console.log(result);
-	if (result) {
-	    var piece = this.board[from[0]][from[1]];
-	    this.board[from[0]][from[1]] = this.EMPTY_SPACE;
-	    this.board[to[0]][to[1]] = piece;
-	    this.nextTurn();
-	    return true;
-	}
+    } else if (this.isKnight(from)) {
+	validMoves = this.getValidKnightMoves(from);
     }
+    console.log(validMoves);
+    var result = this.isMoveInList(validMoves, to);
+    console.log(result);
+    if (result) {
+	var piece = this.board[from[0]][from[1]];
+	// FIXME: save piece that is captured
+	this.board[from[0]][from[1]] = this.EMPTY_SPACE;
+	this.board[to[0]][to[1]] = piece;
+	this.nextTurn();
+	return true;
+    }
+
     return false;
 };
 
 ChessBoard.prototype.isOccupiedSameColor = function(from, candidate) {
-    if (this.getColor(from) == this.getColor(candidate)) {
+    if ((this.getColor(from) == this.getColor(candidate)) &&
+	this.isOccupied(from) && this.isOccupied(candidate)) {
+	return true;
+    }
+    return false;
+};
+
+ChessBoard.prototype.isOccupiedDifferentColor = function(from, candidate) {
+    if ((this.getColor(from) != this.getColor(candidate)) &&
+	this.isOccupied(from) && this.isOccupied(candidate)) {
 	return true;
     }
     return false;
@@ -225,6 +238,33 @@ ChessBoard.prototype.isOnBoard = function(pos) {
     return false;
 };
 
+ChessBoard.prototype.getValidKnightMoves = function(from) {
+    var validMoves = [];
+    var candidates = [[from[0] - 2, from[1] + 1],
+		      [from[0] - 2, from[1] - 1],
+		      [from[0] - 1, from[1] + 2],
+		      [from[0] + 1, from[1] + 2],
+		      [from[0] + 2, from[1] + 1],
+		      [from[0] + 2, from[1] - 1],
+		      [from[0] - 1, from[1] - 2],
+		      [from[0] + 1, from[1] - 2]];
+    for (var i = 0; i < candidates.length; i += 1) {
+	if (this.isOnBoard(candidates[i]) &&
+	    !this.isOccupiedSameColor(from, candidates[i])) {
+	    validMoves.push(candidates[i]);
+	}
+    }
+    return validMoves;
+};
+
+ChessBoard.prototype.getValidBishopMoves = function(from) {
+    var validMoves = [];
+    var candidate = [from[0], from[1]];
+    for (var i = 1; i < 8; i += 1) {
+	
+    }
+}
+
 ChessBoard.prototype.getValidPawnMoves = function(from) {
     var validMoves = [];
     if (this.isWhite(from)) {
@@ -238,7 +278,40 @@ ChessBoard.prototype.getValidPawnMoves = function(from) {
 		validMoves.push(candidate);
 	    }
 	}
+	candidate = [from[0] - 1, from[1] - 1];
+	if (this.isOnBoard(candidate) && 
+	    this.isOccupiedDifferentColor(from, candidate)) {
+	    validMoves.push(candidate);
+	}
+	candidate = [from[0] - 1, from[1] + 1];
+	if (this.isOnBoard(candidate) && 
+	    this.isOccupiedDifferentColor(from, candidate)) {
+	    validMoves.push(candidate);
+	}
+    } else if (this.isBlack(from)) {
+	var candidate = [from[0] + 1, from[1]];
+	if (this.isOnBoard(candidate) && !this.isOccupied(candidate)) {
+	    validMoves.push(candidate);
+	    candidate = [from[0] + 2, from[1]];
+	    if (this.isOnBoard(candidate) && !this.isOccupied(candidate) &&
+		// FIMXE:  hard-coded, but... never changes?
+		(from[0] == 1)) {
+		validMoves.push(candidate);
+	    }
+	}
+	candidate = [from[0] + 1, from[1] + 1];
+	if (this.isOnBoard(candidate) && 
+	    this.isOccupiedDifferentColor(from, candidate)) {
+	    validMoves.push(candidate);
+	}
+	candidate = [from[0] + 1, from[1] - 1];
+	if (this.isOnBoard(candidate) && 
+	    this.isOccupiedDifferentColor(from, candidate)) {
+	    validMoves.push(candidate);
+	}
     }
+    // FIXME:  en passent
+    // FIXME:  promotion
     return validMoves;
 };
 
@@ -249,6 +322,12 @@ board.print();
 var foo = board.getPos('a', 1);
 console.log(foo);
 
-var move = board.readConsoleMove();
-board.move(move);
-board.print(move);
+while (true) {
+    var move = board.readConsoleMove();
+    if ((move === null) || (move === "")) continue;
+    var result = board.move(move);
+    if (!result) {
+	console.log("Invalid move.")
+    }
+    board.print(move);
+}

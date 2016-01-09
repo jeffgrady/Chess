@@ -132,6 +132,14 @@ ChessBoard.prototype.isBishop = function(pos) {
     return false;
 };
 
+ChessBoard.prototype.isRook = function(pos) {
+    if ((this.board[pos[0]][pos[1]] == this.ROOK_BLACK) ||
+	(this.board[pos[0]][pos[1]] == this.ROOK_WHITE)) {
+	return true;
+    }
+    return false;
+};
+
 ChessBoard.prototype.isQueen = function(pos) {
     if ((this.board[pos[0]][pos[1]] == this.QUEEN_BLACK) ||
 	(this.board[pos[0]][pos[1]] == this.QUEEN_WHITE)) {
@@ -200,6 +208,12 @@ ChessBoard.prototype.move = function(move) {
     } else if (this.isBishop(from)) {
 	console.log("is bishop");
 	validMoves = this.getValidBishopMoves(from);
+    } else if (this.isRook(from)) {
+	console.log("is rook");
+	validMoves = this.getValidRookMoves(from);
+    } else if (this.isQueen(from)) {
+	console.log("is queen");
+	validMoves = this.getValidQueenMoves(from);
     }
     console.log(validMoves);
     var result = this.isMoveInList(validMoves, to);
@@ -344,6 +358,90 @@ ChessBoard.prototype.getValidBishopMoves = function(from) {
 	    break;
 	}
     }
+    return validMoves;
+}
+
+ChessBoard.prototype.getValidRookMoves = function(from) {
+    var validMoves = [];
+    var candidate = [from[0], from[1]].slice();
+    // up
+    for (var i = 1; i < 8; i += 1) {
+	candidate[0] -= 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    candidate = [from[0], from[1]].slice();
+    // down
+    for (var i = 1; i < 8; i += 1) {
+	candidate[0] += 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    candidate = [from[0], from[1]].slice();
+    // left
+    for (var i = 1; i < 8; i += 1) {
+	candidate[1] -= 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    candidate = [from[0], from[1]];
+    // right
+    for (var i = 1; i < 8; i += 1) {
+	candidate[1] += 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    return validMoves;
+}
+
+ChessBoard.prototype.getValidQueenMoves = function(from) {
+    var validMoves = this.getValidBishopMoves(from);
+    var rookMoves = this.getValidRookMoves(from);
+    validMoves = validMoves.concat(rookMoves);
     return validMoves;
 }
 

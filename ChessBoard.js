@@ -175,6 +175,10 @@ ChessBoard.prototype.move = function(move) {
     */
     var from = this.getPos(move[0], move[1]);
     var to = this.getPos(move[2], move[3]);
+    // Filter out where they put the piece back
+    if ((from[0] == to[0]) && (from[1] == to[1])) {
+	return false;
+    }
     if ((from.length == 0) || (to.length == 0)) {
 	return false;
     }
@@ -188,9 +192,14 @@ ChessBoard.prototype.move = function(move) {
     }
     var validMoves = [];
     if (this.isPawn(from)) {
+	console.log("is pawn");
 	validMoves = this.getValidPawnMoves(from);
     } else if (this.isKnight(from)) {
+	console.log("is knight");
 	validMoves = this.getValidKnightMoves(from);
+    } else if (this.isBishop(from)) {
+	console.log("is bishop");
+	validMoves = this.getValidBishopMoves(from);
     }
     console.log(validMoves);
     var result = this.isMoveInList(validMoves, to);
@@ -231,7 +240,7 @@ ChessBoard.prototype.isOccupied = function(pos) {
 };
 
 ChessBoard.prototype.isOnBoard = function(pos) {
-    if ((pos[0] >= 0) && (pos[0] <=7) &&
+    if ((pos[0] >= 0) && (pos[0] <= 7) &&
 	(pos[1] >= 0) && (pos[1] <= 7)) {
 	return true;
     }
@@ -259,10 +268,83 @@ ChessBoard.prototype.getValidKnightMoves = function(from) {
 
 ChessBoard.prototype.getValidBishopMoves = function(from) {
     var validMoves = [];
-    var candidate = [from[0], from[1]];
+    var candidate = [from[0], from[1]].slice();
+    // up and to the right
     for (var i = 1; i < 8; i += 1) {
-	
+	candidate[0] -= 1;
+	candidate[1] += 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
     }
+    candidate = [from[0], from[1]].slice();
+    // up and to the left
+    for (var i = 1; i < 8; i += 1) {
+	candidate[0] -= 1;
+	candidate[1] -= 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    candidate = [from[0], from[1]].slice();
+    // down and to the right
+    for (var i = 1; i < 8; i += 1) {
+	candidate[0] += 1;
+	candidate[1] += 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    candidate = [from[0], from[1]];
+    // down and to the left
+    for (var i = 1; i < 8; i += 1) {
+	candidate[0] += 1;
+	candidate[1] -= 1;
+	if (this.isOnBoard(candidate)) {
+	    if (!this.isOccupied(candidate)) {
+		validMoves.push(candidate.slice());
+		continue;
+	    } else if (this.isOccupiedDifferentColor(from, candidate)) {
+		validMoves.push(candidate.slice());
+		break;
+	    } else {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+    return validMoves;
 }
 
 ChessBoard.prototype.getValidPawnMoves = function(from) {

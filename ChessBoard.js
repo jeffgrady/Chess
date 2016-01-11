@@ -18,7 +18,17 @@ var ChessBoard = function() {
     this.BLACK = 0;
     this.WHITE = 1;
     this.TURN = this.WHITE;
+    this.CHECK = false;
     this.error_message = "";
+    this.BOARD_SIZE = 8;
+
+    // Special cases for castling
+    this.WHITE_KING_HAS_MOVED = false;
+    this.BLACK_KING_HAS_MOVED = false;
+    this.WHITE_ROOK_A_HAS_MOVED = false;
+    this.BLACK_ROOK_A_HAS_MOVED = false;
+    this.WHITE_ROOK_H_HAS_MOVED = false;
+    this.BLACK_ROOK_H_HAS_MOVED = false;
 
     this.pieces = [ '   ', '*P*', '*N*', '*B*', '*R*', '*Q*', '*K*',
 		    ' P ', ' N ', ' B ', ' R ', ' Q ', ' K ' ];
@@ -46,9 +56,9 @@ ChessBoard.prototype.print = function() {
     console.log(this.board);    
     console.log("    a   b   c   d   e   f   g   h");
     console.log("  +---+---+---+---+---+---+---+---+");
-    for (var i = 0; i < 8; i += 1) {
-	str = (8-i) + " |";
-	for (var j = 0; j < 8; j += 1) {
+    for (var i = 0; i < this.BOARD_SIZE; i += 1) {
+	str = (this.BOARD_SIZE-i) + " |";
+	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
 	    str += this.pieces[this.board[i][j]] + "|"
 	}
 	console.log(str);
@@ -61,11 +71,11 @@ ChessBoard.prototype.getPos = function(x, y) {
 	this.error_message = "Invalid move: " + x;
 	return [];
     }
-    if ((y < 1) || (y > 8)) {
+    if ((y < 1) || (y > this.BOARD_SIZE)) {
 	this.error_message = "Invalid move: " + y;
 	return [];
     }
-    var y_index = 8 - y;
+    var y_index = this.BOARD_SIZE - y;
     var x_index = x.charCodeAt(0) - 'a'.charCodeAt(0);
     console.log(y_index);
     console.log(x_index);
@@ -175,12 +185,34 @@ ChessBoard.prototype.nextTurn = function() {
     return this.TURN;
 };
 
+ChessBoard.prototype.getOppositeColor = function() {
+    if (this.TURN == this.WHITE) {
+	return this.BLACK;
+    } else {
+	return this.WHITE;
+    }
+    return -1
+};
+
+ChessBoard.prototype.getValidMoves = function(from, invalidMoves) {
+    var validMoves = [];
+    if (this.isPawn(from)) {
+	validMoves = this.getValidPawnMoves(from);
+    } else if (this.isKnight(from)) {
+	validMoves = this.getValidKnightMoves(from);
+    } else if (this.isBishop(from)) {
+	validMoves = this.getValidBishopMoves(from);
+    } else if (this.isRook(from)) {
+	validMoves = this.getValidRookMoves(from);
+    } else if (this.isQueen(from)) {
+	validMoves = this.getValidQueenMoves(from);
+    } else if (this.isKing(from)) {
+	validMoves = this.getValidKingMoves(from, invalidMoves);
+    }
+    return validMoves;
+};
+
 ChessBoard.prototype.move = function(move) {
-    /*
-    this.BLACK = 0;
-    this.WHITE = 1;
-    this.TURN = this.WHITE;
-    */
     var from = this.getPos(move[0], move[1]);
     var to = this.getPos(move[2], move[3]);
     // Filter out where they put the piece back
@@ -198,31 +230,34 @@ ChessBoard.prototype.move = function(move) {
 	this.error_message = "It's not black's turn.";
 	return false;
     }
-    var validMoves = [];
-    if (this.isPawn(from)) {
-	console.log("is pawn");
-	validMoves = this.getValidPawnMoves(from);
-    } else if (this.isKnight(from)) {
-	console.log("is knight");
-	validMoves = this.getValidKnightMoves(from);
-    } else if (this.isBishop(from)) {
-	console.log("is bishop");
-	validMoves = this.getValidBishopMoves(from);
-    } else if (this.isRook(from)) {
-	console.log("is rook");
-	validMoves = this.getValidRookMoves(from);
-    } else if (this.isQueen(from)) {
-	console.log("is queen");
-	validMoves = this.getValidQueenMoves(from);
+    var invalidMoves = this.getAllValidMoves(this.getOppositeColor());
+    var validMoves = this.getValidMoves(from, invalidMoves);
+    if (validMoves == null) {
+	this.error_message = "Unknown piece.";
+	console.log(this.error_message);
+	return false;
     }
     console.log(validMoves);
     var result = this.isMoveInList(validMoves, to);
     console.log(result);
     if (result) {
 	var piece = this.board[from[0]][from[1]];
-	// FIXME: save piece that is captured
 	this.board[from[0]][from[1]] = this.EMPTY_SPACE;
+	var dest_space = this.board[to[0]][to[1]];
 	this.board[to[0]][to[1]] = piece;
+	if (this.kingIsInCheck(this.TURN)) {
+	    this.error_message = "King is in check.";
+	    this.board[to[0]][to[1]] = dest_space;
+	    this.board[from[0]][from[1]] = piece;
+	    console.log(this.error_message);
+	    return false;
+	} else if (this.kingIsInCheck(this.getOppositeColor())) {
+	    console.log("CHECK!!!");
+	    this.CHECK = true;
+	} else {
+	    console.log("Out of check");
+	    this.CHECK = false;
+	}
 	this.nextTurn();
 	return true;
     }
@@ -254,8 +289,8 @@ ChessBoard.prototype.isOccupied = function(pos) {
 };
 
 ChessBoard.prototype.isOnBoard = function(pos) {
-    if ((pos[0] >= 0) && (pos[0] <= 7) &&
-	(pos[1] >= 0) && (pos[1] <= 7)) {
+    if ((pos[0] >= 0) && (pos[0] < this.BOARD_SIZE) &&
+	(pos[1] >= 0) && (pos[1] < this.BOARD_SIZE)) {
 	return true;
     }
     return false;
@@ -280,11 +315,72 @@ ChessBoard.prototype.getValidKnightMoves = function(from) {
     return validMoves;
 };
 
+ChessBoard.prototype.getAllValidMoves = function(color) {
+    var validMoves = [];
+    for (var i = 0; i < this.BOARD_SIZE; i += 1) {
+	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
+	    if (this.getColor([i, j]) == color) {
+		if (this.isKing([i, j])) {
+		    validMoves = 
+			validMoves.concat(this.getValidKingMoves([i, j], []));
+		} else {
+		    validMoves = 
+			validMoves.concat(this.getValidMoves([i, j]));
+		}
+	    }
+	}
+    }
+    return validMoves;
+};
+
+ChessBoard.prototype.getValidKingMoves = function(from,
+						  invalidMoves) {
+    var validMoves = [];
+    var candidates = [[from[0] - 1, from[1] - 1],
+		      [from[0] - 1, from[1]    ],
+		      [from[0] - 1, from[1] + 1],
+		      [from[0]    , from[1] + 1],
+		      [from[0] + 1, from[1] + 1],
+		      [from[0] + 1, from[1]    ],
+		      [from[0] + 1, from[1] - 1],
+		      [from[0]    , from[1] - 1]];
+    for (var i = 0; i < candidates.length; i += 1) {
+	if (this.isOnBoard(candidates[i]) &&
+	    !this.isOccupiedSameColor(from, candidates[i]) &&
+	    !this.isMoveInList(invalidMoves, candidates[i])) {
+	    validMoves.push(candidates[i]);
+	}
+    }
+    return validMoves;
+};
+
+ChessBoard.prototype.kingIsInCheck = function(color) {
+    var pos = this.findKing(color);
+    var opposite_color = this.WHITE;
+    if (color == this.WHITE) {
+	opposite_color = this.BLACK;
+    }
+    var validMoves = this.getAllValidMoves(opposite_color);
+    return this.isMoveInList(validMoves, pos);
+};
+
+ChessBoard.prototype.findKing = function(color) {
+    for (var i = 0; i < this.BOARD_SIZE; i += 1) {
+	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
+	    if (this.isKing([i, j]) &&
+		(this.getColor([i, j]) == color)) {
+		return [i, j];
+	    }
+	}
+    }
+    return [];
+};
+
 ChessBoard.prototype.getValidBishopMoves = function(from) {
     var validMoves = [];
     var candidate = [from[0], from[1]].slice();
     // up and to the right
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[0] -= 1;
 	candidate[1] += 1;
 	if (this.isOnBoard(candidate)) {
@@ -303,7 +399,7 @@ ChessBoard.prototype.getValidBishopMoves = function(from) {
     }
     candidate = [from[0], from[1]].slice();
     // up and to the left
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[0] -= 1;
 	candidate[1] -= 1;
 	if (this.isOnBoard(candidate)) {
@@ -322,7 +418,7 @@ ChessBoard.prototype.getValidBishopMoves = function(from) {
     }
     candidate = [from[0], from[1]].slice();
     // down and to the right
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[0] += 1;
 	candidate[1] += 1;
 	if (this.isOnBoard(candidate)) {
@@ -341,7 +437,7 @@ ChessBoard.prototype.getValidBishopMoves = function(from) {
     }
     candidate = [from[0], from[1]];
     // down and to the left
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[0] += 1;
 	candidate[1] -= 1;
 	if (this.isOnBoard(candidate)) {
@@ -365,7 +461,7 @@ ChessBoard.prototype.getValidRookMoves = function(from) {
     var validMoves = [];
     var candidate = [from[0], from[1]].slice();
     // up
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[0] -= 1;
 	if (this.isOnBoard(candidate)) {
 	    if (!this.isOccupied(candidate)) {
@@ -383,7 +479,7 @@ ChessBoard.prototype.getValidRookMoves = function(from) {
     }
     candidate = [from[0], from[1]].slice();
     // down
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[0] += 1;
 	if (this.isOnBoard(candidate)) {
 	    if (!this.isOccupied(candidate)) {
@@ -401,7 +497,7 @@ ChessBoard.prototype.getValidRookMoves = function(from) {
     }
     candidate = [from[0], from[1]].slice();
     // left
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[1] -= 1;
 	if (this.isOnBoard(candidate)) {
 	    if (!this.isOccupied(candidate)) {
@@ -419,7 +515,7 @@ ChessBoard.prototype.getValidRookMoves = function(from) {
     }
     candidate = [from[0], from[1]];
     // right
-    for (var i = 1; i < 8; i += 1) {
+    for (var i = 1; i < this.BOARD_SIZE; i += 1) {
 	candidate[1] += 1;
 	if (this.isOnBoard(candidate)) {
 	    if (!this.isOccupied(candidate)) {

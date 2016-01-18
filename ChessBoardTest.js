@@ -76,4 +76,17 @@ describe('ChessBoard', function() {
 	    assert.notOk(board.move('g2g3'));
 	});
     });
+    
+    describe('ChessBoard Tests:  undo/redo', function() {
+	it('should undo and redo moves', function() {
+	    assert.ok(board.move('e2e4'));
+	    assert.ok(board.move('e7e5'));
+	    assert.ok(board.undo());
+	    assert.ok(board.undo());
+	    assert.notOk(board.undo());
+	    assert.ok(board.redo());
+	    assert.ok(board.redo());
+	    assert.notOk(board.redo());
+	});
+    });
 });

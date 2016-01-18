@@ -22,13 +22,8 @@ var ChessBoard = function() {
     this.error_message = "";
     this.BOARD_SIZE = 8;
 
-    // Special cases for castling
-    this.WHITE_KING_HAS_MOVED = false;
-    this.BLACK_KING_HAS_MOVED = false;
-    this.WHITE_ROOK_A_HAS_MOVED = false;
-    this.BLACK_ROOK_A_HAS_MOVED = false;
-    this.WHITE_ROOK_H_HAS_MOVED = false;
-    this.BLACK_ROOK_H_HAS_MOVED = false;
+    this.move_history = [];
+    this.move_history_index = this.move_history.length;
 
     this.pieces = [ '   ', '*P*', '*N*', '*B*', '*R*', '*Q*', '*K*',
 		    ' P ', ' N ', ' B ', ' R ', ' Q ', ' K ' ];
@@ -88,6 +83,11 @@ ChessBoard.prototype.readConsoleMove = function() {
     if (move.length != 4) {
 	this.error_message = "Invalid move: " + move;
 	return null;
+    }
+    if (move === 'undo') {
+	return this.undo();
+    } else if (move === 'redo') {
+	return this.redo();
     }
     return move.split('');
 };
@@ -259,10 +259,55 @@ ChessBoard.prototype.move = function(move) {
 	    this.CHECK = false;
 	}
 	this.nextTurn();
+	this.move_history[this.move_history_index] = {
+	    from: from,
+	    to: to,
+	    piece: piece,
+	    dest_space: dest_space,
+	    castle: false,
+	    promotion: null
+	};
+	this.move_history_index += 1;
+	// ensures we remove stale history if we called undo() a few times etc.
+	this.move_history = this.move_history.slice(0,
+						    this.move_history_index);
+	console.log(this.move_history);
+	console.log(this.move_history_index);
 	return true;
     }
 
     return false;
+};
+
+ChessBoard.prototype.undo = function() {
+    if ((this.move_history_index <= 0) || (this.move_history.length <= 0)) {
+	this.error_message = "End of undo history.";
+	return false;
+    }
+    var move = this.move_history[this.move_history_index - 1];
+    this.board[move['to'][0]][move['to'][1]] = move['dest_space'];
+    this.board[move['from'][0]][move['from'][1]] = move['piece'];
+    this.nextTurn();
+    // FIXME:  castling and promotion
+    this.move_history_index -= 1;
+    return true;
+};
+
+ChessBoard.prototype.redo = function() {
+    if ((this.move_history_index < 0) ||
+	(this.move_history.length <= 0) ||
+	(this.move_history_index === this.move_history.length)) {
+	this.error_message = "End of redo history.";
+	return false;
+    }
+    var move = this.move_history[this.move_history_index];
+    var piece = this.board[move['from'][0]][move['from'][1]];
+    this.board[move['from'][0]][move['from'][1]] = this.EMPTY_SPACE;
+    var dest_space = this.board[move['to'][0]][move['to'][1]];
+    this.board[move['to'][0]][move['to'][1]] = piece;
+    // FIXME:  castling and promotion
+    this.move_history_index += 1;
+    return true;
 };
 
 ChessBoard.prototype.isOccupiedSameColor = function(from, candidate) {
@@ -351,6 +396,8 @@ ChessBoard.prototype.getValidKingMoves = function(from,
 	    validMoves.push(candidates[i]);
 	}
     }
+    // castling
+    
     return validMoves;
 };
 
@@ -592,18 +639,3 @@ ChessBoard.prototype.getValidPawnMoves = function(from) {
 };
 
 module.exports = ChessBoard;
-
-var board = new ChessBoard();
-board.print();
-var foo = board.getPos('a', 1);
-console.log(foo);
-
-while (true) {
-    var move = board.readConsoleMove();
-    if ((move === null) || (move === "")) continue;
-    var result = board.move(move);
-    if (!result) {
-	console.log("Invalid move.")
-    }
-    board.print(move);
-}

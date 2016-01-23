@@ -75,6 +75,34 @@ describe('ChessBoard', function() {
 	    // Can't move to put the king in check
 	    assert.notOk(board.move('g2g3'));
 	});
+	it('should castle king side', function() {
+	    assert.ok(board.move('e2e4'));
+	    assert.ok(board.move('e7e5'));
+	    assert.ok(board.move('g1f3'));
+	    assert.ok(board.move('g8f6'));
+	    assert.ok(board.move('f1d3'));
+	    assert.ok(board.move('f8d6'));
+	    assert.ok(board.move('e1g1'));
+	    assert.ok(board.move('e8g8'));
+	    // try one extra move
+	    assert.ok(board.move('g1h1'));
+	    assert.ok(board.move('g8h8'));
+	});
+	it('should castle queen side', function() {
+	    assert.ok(board.move('d2d4'));
+	    assert.ok(board.move('d7d5'));
+	    assert.ok(board.move('b1c3'));
+	    assert.ok(board.move('b8c6'));
+	    assert.ok(board.move('c1e3'));
+	    assert.ok(board.move('c8e6'));
+	    assert.ok(board.move('d1d2'));
+	    assert.ok(board.move('d8d7'));
+	    assert.ok(board.move('e1c1'));
+	    assert.ok(board.move('e8c8'));
+	    // try one extra move
+	    assert.ok(board.move('c1b1'));
+	    assert.ok(board.move('c8b8'));
+	});
     });
     
     describe('ChessBoard Tests:  undo/redo', function() {

@@ -72,8 +72,6 @@ ChessBoard.prototype.getPos = function(x, y) {
     }
     var y_index = this.BOARD_SIZE - y;
     var x_index = x.charCodeAt(0) - 'a'.charCodeAt(0);
-    console.log(y_index);
-    console.log(x_index);
     return [y_index, x_index];
 };
 
@@ -166,6 +164,13 @@ ChessBoard.prototype.isKing = function(pos) {
     return false;
 };
 
+ChessBoard.prototype.isEmptySpace = function(pos) {
+    if (this.board[pos[0]][pos[1]] == this.EMPTY_SPACE) {
+	return true;
+    }
+    return false;
+};
+
 ChessBoard.prototype.isMoveInList = function(validMoves, move) {
     for (var i = 0; i < validMoves.length; i += 1) {
 	if ((validMoves[i][0] == move[0]) &&
@@ -192,6 +197,16 @@ ChessBoard.prototype.getOppositeColor = function() {
 	return this.WHITE;
     }
     return -1
+};
+
+ChessBoard.prototype.pieceHasMoved = function(from) {
+    for (var i = 0; i < this.move_history.length; i += 1) {
+	if ((this.move_history[i]['from'][0] == from[0]) &&
+	    (this.move_history[i]['from'][1] == from[1])) {
+	    return true;
+	}
+    }
+    return false;
 };
 
 ChessBoard.prototype.getValidMoves = function(from, invalidMoves) {
@@ -258,19 +273,21 @@ ChessBoard.prototype.move = function(move) {
 	    console.log("Out of check");
 	    this.CHECK = false;
 	}
+	// if we castled, move the rook
+	var castling = this.castlingRookFixup(from, to);
 	this.nextTurn();
 	this.move_history[this.move_history_index] = {
 	    from: from,
 	    to: to,
 	    piece: piece,
 	    dest_space: dest_space,
-	    castle: false,
+	    castle: castling,
 	    promotion: null
 	};
 	this.move_history_index += 1;
 	// ensures we remove stale history if we called undo() a few times etc.
-	this.move_history = this.move_history.slice(0,
-						    this.move_history_index);
+	this.move_history =
+	    this.move_history.slice(0, this.move_history_index);
 	console.log(this.move_history);
 	console.log(this.move_history_index);
 	return true;
@@ -378,6 +395,92 @@ ChessBoard.prototype.getAllValidMoves = function(color) {
     return validMoves;
 };
 
+ChessBoard.prototype.castling = function(kingFrom, kingTo) {
+    if ((kingFrom[1] === kingTo[1] - 2) ||
+	(kingFrom[1] === kingTo[1] + 2)) {
+	return true;
+    }
+    return false;
+};
+
+ChessBoard.prototype.castlingRookFixup = function(kingFrom, kingTo) {
+    if (this.castling(kingFrom, kingTo)) {
+	var rookPos;
+	var rookTo;
+	// king side
+	if (kingFrom[1] < kingTo[1]) {
+	    rookPos = [kingTo[0], kingTo[1] + 1];
+	    rookTo = [rookPos[0], rookPos[1] - 2];
+	} else {
+	    // queen side
+	    rookPos = [kingTo[0], kingTo[1] - 2];
+	    rookTo = [rookPos[0], rookPos[1] + 3];
+	}
+	if (!this.isOnBoard(rookPos) ||
+	    !this.isOnBoard(rookTo) ||
+	    !this.isRook(rookPos) ||
+	    !this.isEmptySpace(rookTo)) {
+	    this.error_message = "BUG:  something went wrong castling.";
+	    console.log(this.error_message);
+	    return null;
+	}
+	var piece = this.board[rookPos[0]][rookPos[1]];
+	this.board[rookPos[0]][rookPos[1]] = this.EMPTY_SPACE;
+	var dest_space = this.board[rookTo[0]][rookTo[1]];
+	this.board[rookTo[0]][rookTo[1]] = piece;
+	// FIXME:  need to handle undo...
+	// FIXME:  is this the right thing to return?  does it matter?
+	return rookTo;
+    }
+    return null;
+};
+
+ChessBoard.prototype.castlingHelper = function(kingPos,
+					       rookPos,
+					       invalidMoves) {
+    // castling
+    /*
+      1.  The king and the chosen rook are on the player's first rank.
+          (i.e., 1 or 8)
+
+      2.  Neither the king nor the chosen rook has previously moved.
+      
+      3.  There are no pieces between the king and the chosen rook.
+
+      4.  The king is not currently in check.
+
+      5.  The king does not pass through a square that is attacked by an
+          enemy piece.
+
+      6.  The king does not end up in check. (True of any legal move.)
+    */
+    var validMoves = [];
+    var emptySpace1;
+    var emptySpace2;
+    // castling king side
+    if (kingPos[1] < rookPos[1]) {
+	emptySpace1 = [kingPos[0], kingPos[1] - 1];
+	emptySpace2 = [kingPos[0], kingPos[1] - 2];
+    } else  {
+	// castling queen side
+	emptySpace1 = [kingPos[0], kingPos[1] + 1];
+	emptySpace2 = [kingPos[0], kingPos[1] + 2];
+    }
+    if (this.isKing(kingPos) &&
+	this.isRook(rookPos) &&
+	this.isOnBoard(emptySpace1) &&
+	this.isOnBoard(emptySpace2) &&
+	!this.pieceHasMoved(kingPos) &&
+	!this.pieceHasMoved(rookPos) &&
+	this.isEmptySpace(emptySpace1) &&
+	this.isEmptySpace(emptySpace2) &&
+	!this.isMoveInList(invalidMoves, emptySpace1) &&
+	!this.isMoveInList(invalidMoves, emptySpace2)) {
+	validMoves.push(emptySpace2.slice());
+    }
+    return validMoves;
+};
+
 ChessBoard.prototype.getValidKingMoves = function(from,
 						  invalidMoves) {
     var validMoves = [];
@@ -397,7 +500,28 @@ ChessBoard.prototype.getValidKingMoves = function(from,
 	}
     }
     // castling
-    
+    if (!this.CHECK) {
+	var fromKing;
+	var fromRook;
+	var fromRookQueenside;
+	if (this.isWhite(from)) {
+	    fromKing = this.getPos('e', '1');
+	    fromRook = this.getPos('h', '1');
+	    fromRookQueenside = this.getPos('a', '1');
+	} else if (this.isBlack(from)) {
+	    fromKing = this.getPos('e', '8');
+	    fromRook = this.getPos('h', '8');
+	    fromRookQueenside = this.getPos('a', '8');
+	}
+	validMoves =
+	    validMoves.concat(this.castlingHelper(fromKing,
+						  fromRook,
+						  invalidMoves));
+	validMoves =
+	    validMoves.concat(this.castlingHelper(fromKing,
+						  fromRookQueenside,
+						  invalidMoves));
+    }
     return validMoves;
 };
 

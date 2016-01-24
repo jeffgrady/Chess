@@ -95,6 +95,9 @@ describe('ChessBoard', function() {
 	    assert.ok(board.move('b8c6'));
 	    assert.ok(board.move('c1e3'));
 	    assert.ok(board.move('c8e6'));
+	    // these should fail because the queen is in the way
+	    assert.notOk(board.move('e1c1'));
+	    assert.notOk(board.move('e8c8'));
 	    assert.ok(board.move('d1d2'));
 	    assert.ok(board.move('d8d7'));
 	    assert.ok(board.move('e1c1'));
@@ -102,6 +105,32 @@ describe('ChessBoard', function() {
 	    // try one extra move
 	    assert.ok(board.move('c1b1'));
 	    assert.ok(board.move('c8b8'));
+	});
+	it('should prevent castling out of or through check', function() {
+	    assert.ok(board.move('e2e4'));
+	    assert.ok(board.move('e7e5'));
+	    assert.ok(board.move('f1d3'));
+	    assert.ok(board.move('g8h6'));
+	    assert.ok(board.move('f2f4'));
+	    assert.ok(board.move('f8c5'));
+	    assert.ok(board.move('g1h3'));
+	    assert.ok(board.move('f7f5'));
+	    // can't castle to end up in check
+	    assert.notOk(board.move('e1g1'));
+	    assert.ok(board.move('d1h5'));
+	    assert.ok(board.CHECK);
+	    // can't castle out of check
+	    assert.notOk(board.move('e8g8'));
+	    assert.ok(board.move('g7g6'));
+	    assert.ok(board.move('h5h6'));
+	    // can't castle through check
+	    assert.notOk(board.move('e8g8'));
+	    assert.ok(board.move('c5b4'));
+	    assert.ok(board.move('e1g1'));
+	    // can't castle through check
+	    assert.notOk(board.move('e8g8'));
+	    // can't move into check
+	    assert.notOk(board.move('e8f8'));
 	});
     });
     

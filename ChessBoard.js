@@ -457,14 +457,19 @@ ChessBoard.prototype.castlingHelper = function(kingPos,
     var validMoves = [];
     var emptySpace1;
     var emptySpace2;
+    var emptySpace3;
     // castling king side
     if (kingPos[1] < rookPos[1]) {
-	emptySpace1 = [kingPos[0], kingPos[1] - 1];
-	emptySpace2 = [kingPos[0], kingPos[1] - 2];
-    } else  {
-	// castling queen side
 	emptySpace1 = [kingPos[0], kingPos[1] + 1];
 	emptySpace2 = [kingPos[0], kingPos[1] + 2];
+	// make this the same for king side, since we don't have
+	// 3 empty spaces
+	emptySpace3 = [kingPos[0], kingPos[1] + 2];
+    } else  {
+	// castling queen side
+	emptySpace1 = [kingPos[0], kingPos[1] - 1];
+	emptySpace2 = [kingPos[0], kingPos[1] - 2];
+	emptySpace3 = [kingPos[0], kingPos[1] - 3];
     }
     if (this.isKing(kingPos) &&
 	this.isRook(rookPos) &&
@@ -474,6 +479,7 @@ ChessBoard.prototype.castlingHelper = function(kingPos,
 	!this.pieceHasMoved(rookPos) &&
 	this.isEmptySpace(emptySpace1) &&
 	this.isEmptySpace(emptySpace2) &&
+	this.isEmptySpace(emptySpace3) &&
 	!this.isMoveInList(invalidMoves, emptySpace1) &&
 	!this.isMoveInList(invalidMoves, emptySpace2)) {
 	validMoves.push(emptySpace2.slice());

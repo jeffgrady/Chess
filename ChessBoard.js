@@ -475,13 +475,15 @@ ChessBoard.prototype.castlingHelper = function(kingPos,
 	this.isRook(rookPos) &&
 	this.isOnBoard(emptySpace1) &&
 	this.isOnBoard(emptySpace2) &&
+	this.isOnBoard(emptySpace3) &&
 	!this.pieceHasMoved(kingPos) &&
 	!this.pieceHasMoved(rookPos) &&
 	this.isEmptySpace(emptySpace1) &&
 	this.isEmptySpace(emptySpace2) &&
 	this.isEmptySpace(emptySpace3) &&
 	!this.isMoveInList(invalidMoves, emptySpace1) &&
-	!this.isMoveInList(invalidMoves, emptySpace2)) {
+	!this.isMoveInList(invalidMoves, emptySpace2) &&
+       	!this.isMoveInList(invalidMoves, emptySpace3)) {
 	validMoves.push(emptySpace2.slice());
     }
     return validMoves;

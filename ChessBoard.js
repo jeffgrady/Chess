@@ -305,7 +305,29 @@ ChessBoard.prototype.undo = function() {
     this.board[move['to'][0]][move['to'][1]] = move['dest_space'];
     this.board[move['from'][0]][move['from'][1]] = move['piece'];
     this.nextTurn();
-    // FIXME:  castling and promotion
+    // FIXME:  promotion
+    if (move['castle'] != null) {
+	// FIXME:  hard-coded, but always the same?
+	if (move['castle'][1] == 3) {
+	    // castled queen side, move back to file 0
+	    if (move['piece'] == this.KING_WHITE) {
+		this.board[move['castle'][0]][0] = this.ROOK_WHITE;
+	    } else {
+		this.board[move['castle'][0]][0] = this.ROOK_BLACK;
+	    }
+	    this.board[move['castle'][0]][3] = this.EMPTY_SPACE;
+	} else if (move['castle'][1] == 5) {
+	    // castled king side, move back to file 0
+	    if (move['piece'] == this.KING_WHITE) {
+		this.board[move['castle'][0]][this.BOARD_SIZE-1] =
+		    this.ROOK_WHITE;
+	    } else {
+		this.board[move['castle'][0]][this.BOARD_SIZE-1] =
+		    this.ROOK_BLACK;
+	    }
+	    this.board[move['castle'][0]][5] = this.EMPTY_SPACE;
+	}
+    }
     this.move_history_index -= 1;
     return true;
 };
@@ -322,7 +344,30 @@ ChessBoard.prototype.redo = function() {
     this.board[move['from'][0]][move['from'][1]] = this.EMPTY_SPACE;
     var dest_space = this.board[move['to'][0]][move['to'][1]];
     this.board[move['to'][0]][move['to'][1]] = piece;
-    // FIXME:  castling and promotion
+    // FIXME:  promotion
+    if (move['castle'] != null) {
+	// FIXME:  hard-coded, but always the same?
+	if (move['castle'][1] == 3) {
+	    // castled queen side, move back to file 0
+	    if (move['piece'] == this.KING_WHITE) {
+		this.board[move['castle'][0]][3] = this.ROOK_WHITE;
+	    } else {
+		this.board[move['castle'][0]][3] = this.ROOK_BLACK;
+	    }
+	    this.board[move['castle'][0]][0] = this.EMPTY_SPACE;
+	} else if (move['castle'][1] == 5) {
+	    // castled king side, move back to file 0
+	    if (move['piece'] == this.KING_WHITE) {
+		this.board[move['castle'][0]][5] =
+		    this.ROOK_WHITE;
+	    } else {
+		this.board[move['castle'][0]][5] =
+		    this.ROOK_BLACK;
+	    }
+	    this.board[move['castle'][0]][this.BOARD_SIZE-1] =
+		this.EMPTY_SPACE;
+	}
+    }
     this.move_history_index += 1;
     return true;
 };

@@ -1,7 +1,7 @@
 var ChessBoard = require('./ChessBoard');
 var board = new ChessBoard();
-board.print();
 
+board.print();
 while (true) {
     var move = board.readConsoleMove();
     if ((move === null) || (move === "")) continue;
@@ -10,4 +10,9 @@ while (true) {
 	console.log("Invalid move.")
     }
     board.print(move);
+    if (board.PAWN_PROMOTION) {
+	var piece = board.readConsolePawnPromotion();
+	board.resolvePawnPromotion(piece);
+	board.print();
+    }
 }

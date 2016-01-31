@@ -197,4 +197,35 @@ describe('ChessBoard', function() {
 	    assert.ok(board.board[7][1] == board.KING_WHITE);
 	});
     });
+
+    describe('ChessBoard Tests:  pawn promotion', function() {
+	it('should promote pawns', function() {
+	    board.clearBoard();
+	    board.board[1][1] = board.PAWN_BLACK;
+	    board.board[6][0] = board.PAWN_WHITE;
+	    assert.ok(board.move('a2a4'));
+	    assert.ok(board.move('b7b5'));
+	    assert.ok(board.move('a4a5'));
+	    assert.ok(board.move('b5b4'));
+	    assert.ok(board.move('a5a6'));
+	    assert.ok(board.move('b4b3'));
+	    assert.ok(board.move('a6a7'));
+	    assert.ok(board.move('b3b2'));
+	    assert.ok(board.move('a7a8'));
+	    // should have to resolve the promotion before another move
+	    // can happen
+	    assert.notOk(board.move('b2b1'));
+	    assert.notOk(board.resolvePawnPromotion());
+	    assert.notOk(board.resolvePawnPromotion(board.PAWN_WHITE));
+	    assert.notOk(board.resolvePawnPromotion(board.KING_WHITE));
+	    assert.notOk(board.resolvePawnPromotion(board.QUEEN_BLACK));
+	    assert.ok(board.resolvePawnPromotion(board.QUEEN_WHITE));
+	    assert.ok(board.move('b2b1'));
+	    assert.notOk(board.resolvePawnPromotion());
+	    assert.notOk(board.resolvePawnPromotion(board.PAWN_BLACK));
+	    assert.notOk(board.resolvePawnPromotion(board.KING_BLACK));
+	    assert.notOk(board.resolvePawnPromotion(board.QUEEN_WHITE));
+	    assert.ok(board.resolvePawnPromotion(board.QUEEN_BLACK));
+	});
+    });
 });

@@ -22,6 +22,7 @@ var ChessBoard = function() {
     this.error_message = "";
     this.BOARD_SIZE = 8;
 
+    // FIXME:  don't forget to search move history for a draw!
     this.move_history = [];
     this.move_history_index = this.move_history.length;
 
@@ -58,6 +59,14 @@ ChessBoard.prototype.print = function() {
 	}
 	console.log(str);
 	console.log("  +---+---+---+---+---+---+---+---+");
+    }
+};
+
+ChessBoard.prototype.clearBoard = function() {
+    for (var i = 0; i < this.BOARD_SIZE; i += 1) {
+	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
+	    this.board[i][j] = this.EMPTY_SPACE;
+	}
     }
 };
 
@@ -230,6 +239,12 @@ ChessBoard.prototype.getValidMoves = function(from, invalidMoves) {
 ChessBoard.prototype.move = function(move) {
     var from = this.getPos(move[0], move[1]);
     var to = this.getPos(move[2], move[3]);
+    if (this.PAWN_PROMOTION) {
+	this.error_message = 'Please resolve your pawn promotion before ' +
+	    'continuing';
+	console.log(this.error_message);
+	return false;
+    }
     // Filter out where they put the piece back
     if ((from[0] == to[0]) && (from[1] == to[1])) {
 	return false;
@@ -275,6 +290,7 @@ ChessBoard.prototype.move = function(move) {
 	}
 	// if we castled, move the rook
 	var castling = this.castlingRookFixup(from, to);
+	var pawn = this.testPawnPromotion(to);
 	this.nextTurn();
 	this.move_history[this.move_history_index] = {
 	    from: from,
@@ -282,7 +298,8 @@ ChessBoard.prototype.move = function(move) {
 	    piece: piece,
 	    dest_space: dest_space,
 	    castle: castling,
-	    promotion: null
+	    promotion: pawn,
+	    promotion_piece: null
 	};
 	this.move_history_index += 1;
 	// ensures we remove stale history if we called undo() a few times etc.
@@ -294,6 +311,62 @@ ChessBoard.prototype.move = function(move) {
     }
 
     return false;
+};
+
+ChessBoard.prototype.testPawnPromotion = function(to) {
+    if (this.isPawn(to)) {
+	if ((to[0] == 0) ||
+	    (to[0] == (this.BOARD_SIZE - 1))){
+	    this.PAWN_PROMOTION = true;
+	    return to;
+	}
+    }
+    return null;
+};
+
+ChessBoard.prototype.resolvePawnPromotion = function(piece) {
+    var move = this.move_history[this.move_history_index - 1];
+    if (typeof piece == 'undefined') {
+	this.error_message = "You must choose a piece.";
+	console.log(this.error_message);
+	return null;
+    }
+    if (move['promotion'] == null) {
+	this.error_message = "BUG:  error resolving pawn promotion.";
+	console.log(this.error_message);
+	return null;
+    }
+    if (this.isBlack(move['to']) &&
+	((piece <= this.PAWN_BLACK) ||
+	 (piece >= this.KING_BLACK))) {
+	this.error_message =
+	    "Please choose a black knight, bishop, rook, or queen.";
+	console.log(this.error_message);
+	return null;
+    }
+    if (this.isWhite(move['to']) &&
+	((piece <= this.PAWN_WHITE) ||
+	 (piece >= this.KING_WHITE))) {
+	this.error_message =
+	    "Please choose a white knight, bishop, rook, or queen.";
+	console.log(this.error_message);
+	return null;
+    }
+    // FIXME:  consider replacing [''] with move.promotion_piece
+    //         for better type checking
+    move.promotion_piece = piece;
+    // FIXME:  error checking on it being a valid piece
+    this.board[move['to'][0]][move['to'][1]] = piece;
+    this.PAWN_PROMOTION = false;
+    return piece;
+};
+
+ChessBoard.prototype.readConsolePawnPromotion = function() {
+    var piece = readlineSync.question('choose your piece: ').trim();
+    console.log('piece is: ');
+    console.log(piece);
+    // FIXME:  we'll support Qg5 someday...  This will need to be fixed.
+    return Number(piece);
 };
 
 ChessBoard.prototype.undo = function() {
@@ -811,7 +884,6 @@ ChessBoard.prototype.getValidPawnMoves = function(from) {
 	}
     }
     // FIXME:  en passent
-    // FIXME:  promotion
     return validMoves;
 };
 

@@ -1,5 +1,5 @@
-var readlineSync = require('readline-sync');
-
+//var readlineSync = require('readline-sync');
+      console.log("you");
 var ChessBoard = function() {
     this.EMPTY_SPACE = 0;
     this.PAWN_BLACK = 1;
@@ -60,6 +60,62 @@ ChessBoard.prototype.print = function() {
 	console.log(str);
 	console.log("  +---+---+---+---+---+---+---+---+");
     }
+};
+
+ChessBoard.prototype.pieceAsHtml = function(piece) {
+    switch (piece) {
+    case this.EMPTY_SPACE:
+	return '&nbsp;';
+    case this.PAWN_BLACK:
+	return '&#9823;';
+    case this.KNIGHT_BLACK:
+	return '&#9822;';
+    case this.BISHOP_BLACK:
+	return '&#9821;';
+    case this.ROOK_BLACK:
+	return '&#9820;';
+    case this.QUEEN_BLACK:
+	return '&#9819;';
+    case this.KING_BLACK:
+	return '&#9818;';
+    case this.PAWN_WHITE:
+	return '&#9817;';
+    case this.KNIGHT_WHITE:
+	return '&#9816;';
+    case this.BISHOP_WHITE:
+	return '&#9815;';
+    case this.ROOK_WHITE:
+	return '&#9814;';
+    case this.QUEEN_WHITE:
+	return '&#9813;';
+    case this.KING_WHITE:
+	return '&#9812;';
+    }
+    // FIXME:  error!
+    return '&nbsp;'
+};
+
+ChessBoard.prototype.render = function(elt) {
+    var html = "<table height=\"9\" width=\"9\"> \
+      <thead> \
+	<th> \
+	  <td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td> \
+	  <td>g</td><td>h</td> \
+	</th> \
+      </thead> \
+<tbody>";
+
+    for (var i = 0; i < this.BOARD_SIZE; i += 1) {
+	html += "<tr><td></td>";
+	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
+	    html += "<td>" + this.pieceAsHtml(this.board[i][j]) + "</td>";
+	}
+	html += "</tr>";
+    }
+    
+    html += "</tbody></table>";
+    console.log(html);
+    elt.html(html);
 };
 
 ChessBoard.prototype.clearBoard = function() {
@@ -887,4 +943,4 @@ ChessBoard.prototype.getValidPawnMoves = function(from) {
     return validMoves;
 };
 
-module.exports = ChessBoard;
+//module.exports = ChessBoard;

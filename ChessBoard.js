@@ -1,5 +1,5 @@
 //var readlineSync = require('readline-sync');
-      console.log("you");
+
 var ChessBoard = function() {
     this.EMPTY_SPACE = 0;
     this.PAWN_BLACK = 1;

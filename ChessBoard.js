@@ -98,17 +98,29 @@ ChessBoard.prototype.pieceAsHtml = function(piece) {
 ChessBoard.prototype.render = function(elt) {
     var html = "<table height=\"9\" width=\"9\"> \
       <thead> \
-	<th> \
+          <td></td> \
 	  <td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td> \
 	  <td>g</td><td>h</td> \
-	</th> \
       </thead> \
 <tbody>";
 
+    var color;
+    var light_color = '#EEEEEE';
+    var dark_color = '#656565';
     for (var i = 0; i < this.BOARD_SIZE; i += 1) {
-	html += "<tr><td></td>";
+	html += "<tr><td>" + String(this.BOARD_SIZE-i) + "</td>";
 	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
-	    html += "<td>" + this.pieceAsHtml(this.board[i][j]) + "</td>";
+	    if (((i % 2) == 0) && (j % 2) != 0) {
+		color = dark_color;
+	    } else {
+		if (((i % 2) != 0) && (j % 2) == 0) {
+		    color = dark_color;
+		} else {
+		    color = light_color;
+		}
+	    }
+	    html += "<td style=\"background: " + color + "\">" +
+		this.pieceAsHtml(this.board[i][j]) + "</td>";
 	}
 	html += "</tr>";
     }

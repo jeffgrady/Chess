@@ -1,4 +1,7 @@
-//var readlineSync = require('readline-sync');
+var readlineSync;
+if (typeof require != 'undefined') {
+    readlineSync = require('readline-sync');
+}
 
 var ChessBoard = function() {
     this.EMPTY_SPACE = 0;
@@ -955,4 +958,6 @@ ChessBoard.prototype.getValidPawnMoves = function(from) {
     return validMoves;
 };
 
-//module.exports = ChessBoard;
+if (typeof module != 'undefined') {
+    module.exports = ChessBoard;
+}

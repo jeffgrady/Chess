@@ -24,6 +24,7 @@ var ChessBoard = function() {
     this.CHECK = false;
     this.error_message = "";
     this.BOARD_SIZE = 8;
+    this.DRAG_FROM = "";
 
     // FIXME:  don't forget to search move history for a draw!
     this.move_history = [];
@@ -110,8 +111,15 @@ ChessBoard.prototype.render = function(elt) {
     var color;
     var light_color = '#EEEEEE';
     var dark_color = '#656565';
+    var id_attr;
+    var letter = 'a'.charCodeAt(0);
+    var num = 8;
     for (var i = 0; i < this.BOARD_SIZE; i += 1) {
 	html += "<tr><td>" + String(this.BOARD_SIZE-i) + "</td>";
+	if (i != 0) {
+	    num -= 1;
+	}
+	letter = 'a'.charCodeAt(0);
 	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
 	    if (((i % 2) == 0) && (j % 2) != 0) {
 		color = dark_color;
@@ -122,15 +130,92 @@ ChessBoard.prototype.render = function(elt) {
 		    color = light_color;
 		}
 	    }
-	    html += "<td style=\"background: " + color + "\">" +
-		this.pieceAsHtml(this.board[i][j]) + "</td>";
+	    id_attr = String.fromCharCode(letter) + String(num);
+	    html += "<td id=\"" + id_attr + "\" style=\"background: " +
+		color + "\" class=\"droppable\">" +
+		"<div id=\"" + this.board[i][j] + "\" class=\"draggable\">" + 
+		this.pieceAsHtml(this.board[i][j]) +
+		"</div>" + 
+		"</td>";
+	    letter += 1;
 	}
 	html += "</tr>";
     }
     
     html += "</tbody></table>";
-    console.log(html);
+    //console.log(html);
     elt.html(html);
+    var board = this;
+    $(".draggable").each(function(piece) {
+	$(this).draggable({
+	    start: function(event, ui) {
+		console.log("start: ");
+		//console.log(event);
+		board.DRAG_FROM = event.currentTarget.parentElement.id;
+		console.log(board.DRAG_FROM);
+	    }
+	});
+    });
+    $(".droppable").each(function(square) {
+	$(this).droppable({
+	    drop: function( event, ui ) {
+		console.log($( this ));
+		console.log(event);
+		console.log(ui);
+		//console.log(event.toElement.id);
+		console.log(event.target.id);
+		var candidate_move = board.DRAG_FROM + event.target.id;
+		console.log(candidate_move);
+		if (board.move(candidate_move)) {
+		    console.log("success");
+		} else {
+		    console.log("invalid move");
+		    //$(event.target.id).append($(this));
+		}
+		//$(this).html("");
+		board.renderUpdate();
+	    }
+	});
+    });
+};
+
+ChessBoard.prototype.renderUpdate = function() {
+    var letter = 'a'.charCodeAt(0);
+    var num = 8;
+    var pos;
+    var square;
+    var piece;
+    for (var i = 0; i < this.BOARD_SIZE; i += 1) {
+	if (i != 0) {
+	    num -= 1;
+	}
+	letter = 'a'.charCodeAt(0);
+	for (var j = 0; j < this.BOARD_SIZE; j += 1) {
+	    pos = this.getPos(String.fromCharCode(letter), num);
+	    var my_id = "#" + String.fromCharCode(letter) + String(num);
+	    //console.log("updating: " + my_id);
+	    square = $(my_id);
+	    //console.log("updating: " + my_id);
+	    piece = "<div id=\"" + this.board[i][j] +
+		"\" class=\"draggable\">" + 
+		this.pieceAsHtml(this.board[i][j]) +
+		"</div>";
+	    square.html("");
+	    square.html(piece);
+	    letter += 1;
+	}
+    }
+    var board = this;
+    $(".draggable").each(function(piece) {
+	$(this).draggable({
+	    start: function(event, ui) {
+		console.log("start: ");
+		//console.log(event);
+		board.DRAG_FROM = event.currentTarget.parentElement.id;
+		console.log(board.DRAG_FROM);
+	    }
+	});
+    });
 };
 
 ChessBoard.prototype.clearBoard = function() {

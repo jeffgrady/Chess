@@ -69,7 +69,7 @@ ChessBoard.prototype.print = function() {
 ChessBoard.prototype.pieceAsHtml = function(piece) {
     switch (piece) {
     case this.EMPTY_SPACE:
-	return '&nbsp;';
+	return '';
     case this.PAWN_BLACK:
 	return '&#9823;';
     case this.KNIGHT_BLACK:
@@ -96,7 +96,7 @@ ChessBoard.prototype.pieceAsHtml = function(piece) {
 	return '&#9812;';
     }
     // FIXME:  error!
-    return '&nbsp;'
+    return ''
 };
 
 ChessBoard.prototype.render = function(elt) {

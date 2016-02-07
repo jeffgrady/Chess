@@ -1,10 +1,11 @@
 table {
     border: none;
     width: 640px;
-    height: 480px;
+    height: 540px;
     padding: 0;
     margin: 0;
     border-spacing: 0;
+    table-layout: fixed;
 }
 
 thead, tr {
@@ -16,9 +17,10 @@ thead, tr {
 }
 
 thead td {
-    width: 80px;
-    height: 60px;
-    font-size: 12pt;
+    width: 75px;
+    height: 75px;
+    overflow: hidden;
+    font-size: 16px;
 }
 
 table tbody {
@@ -27,14 +29,14 @@ table tbody {
 
 table tbody td:nth-of-type(1) {
     border: 0;
-    font-size: 12pt;
+    font-size: 16px;
     background-color: white;
 }
 
 table tbody td {
     border: 1px solid black;
-    font-size: 36pt;
+    font-size: 50px;
     text-align: center;
-    width: 80px;
-    height: 60px;
+    width: 75px;
+    height: 75px;
 }

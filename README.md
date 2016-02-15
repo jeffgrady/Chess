@@ -8,7 +8,7 @@ This is a chess game I made in JavaScript.  It's still in development.
 $ python -m SimpleHTTPServer
 ```
 
-..and then connect your browser to:  (http://localhost:8000)
+..and then connect your browser to:  [http://localhost:8000](http://localhost:8000)
 
 ## To run on the command line:
 

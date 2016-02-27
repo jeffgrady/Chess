@@ -23,6 +23,7 @@
   "homepage": "https://github.com/jeffgrady/Chess#readme",
   "dependencies": {
     "chai": "^3.4.1",
-    "mocha": "^2.3.4"
+    "mocha": "^2.3.4",
+    "readline-sync": "^1.4.1"
   }
 }

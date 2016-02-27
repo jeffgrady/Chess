@@ -53,7 +53,7 @@ var ChessBoard = function() {
 };
 
 ChessBoard.prototype.print = function() {
-    console.log(this.board);    
+    //console.log(this.board);    
     console.log("    a   b   c   d   e   f   g   h");
     console.log("  +---+---+---+---+---+---+---+---+");
     for (var i = 0; i < this.BOARD_SIZE; i += 1) {
